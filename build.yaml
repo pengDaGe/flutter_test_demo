@@ -1,0 +1,8 @@
+targets:
+  $default:
+    builders:
+      auto_route_generator:auto_route_generator:
+        enabled: true
+        options:
+          # 生成的文件后缀
+          generate_for_dir: ['lib']
