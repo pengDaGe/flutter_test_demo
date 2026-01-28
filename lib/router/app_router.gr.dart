@@ -11,6 +11,38 @@
 part of 'app_router.dart';
 
 /// generated route for
+/// [CounterPage]
+class CounterRoute extends PageRouteInfo<void> {
+  const CounterRoute({List<PageRouteInfo>? children})
+    : super(CounterRoute.name, initialChildren: children);
+
+  static const String name = 'CounterRoute';
+
+  static PageInfo page = PageInfo(
+    name,
+    builder: (data) {
+      return const CounterPage();
+    },
+  );
+}
+
+/// generated route for
+/// [LanguageSettingsPage]
+class LanguageSettingsRoute extends PageRouteInfo<void> {
+  const LanguageSettingsRoute({List<PageRouteInfo>? children})
+    : super(LanguageSettingsRoute.name, initialChildren: children);
+
+  static const String name = 'LanguageSettingsRoute';
+
+  static PageInfo page = PageInfo(
+    name,
+    builder: (data) {
+      return const LanguageSettingsPage();
+    },
+  );
+}
+
+/// generated route for
 /// [MyHomePage]
 class MyHomeRoute extends PageRouteInfo<MyHomeRouteArgs> {
   MyHomeRoute({Key? key, required String title, List<PageRouteInfo>? children})

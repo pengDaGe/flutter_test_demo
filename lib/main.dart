@@ -1,9 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:auto_route/auto_route.dart';
+import 'package:flutter_test_demo/l10n/app_strings.dart';
+import 'package:get/get.dart' hide Trans; // 隐藏 GetX 的 Trans 扩展
+import 'l10n/app_translations.dart';
+import 'l10n/language_controller.dart';
+import 'l10n/language_helper.dart';
+import 'l10n/translation_service.dart'; // 翻译服务
 import 'router/app_router.dart';
 import 'utils/router_helper.dart';
+import 'theme/app_themes.dart'; // ✅ 导入应用主题
+import 'theme/theme_helper.dart'; // ✅ 导入主题工具类
+import 'theme/theme_controller.dart'; // ✅ 导入主题控制器
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await LanguageHelper.init(); // 初始化语言
+  ThemeHelper.init(); // ✅ 初始化主题
   runApp(MyApp());
 }
 
@@ -17,15 +30,41 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     // 初始化路由工具类
     RouterHelper.init(_appRouter);
+    final languageController = Get.find<LanguageController>();
+    final themeController = Get.find<ThemeController>(); // ✅ 获取主题控制器
 
-    return MaterialApp.router(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-      ),
-      // 使用 AutoRoute 配置
-      routerConfig: _appRouter.config(),
-    );
+    // 使用 Obx 监听语言和主题变化
+    return Obx(() {
+      // 获取当前语言和主题模式（确保 Obx 追踪这些变量）
+      final currentLocale = languageController.currentLocale;
+      final themeMode = themeController.themeMode.value;
+
+      return MaterialApp.router(
+        title: 'Flutter Demo',
+
+        // 使用当前语言
+        locale: currentLocale,
+        localizationsDelegates: const [
+          GlobalMaterialLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+        ],
+        supportedLocales: const [
+          Locale('zh', 'CN'),
+          Locale('zh', 'TW'),
+          Locale('en', 'US'),
+          Locale('ja', 'JP'),
+        ],
+
+        // ✅ 配置主题
+        theme: AppThemes.lightTheme,
+        darkTheme: AppThemes.darkTheme,
+        themeMode: themeController.getThemeMode(),
+
+        // AutoRoute 路由配置
+        routerConfig: _appRouter.config(),
+      );
+    });
   }
 }
 
@@ -99,7 +138,7 @@ class _MyHomePageState extends State<MyHomePage> {
           // wireframe for each widget.
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            const Text('You have pushed the button this many times:'),
+            Obx(() => Text(AppStrings.home.tr)),
             Text(
               '$_counter',
               style: Theme.of(context).textTheme.headlineMedium,
@@ -108,9 +147,13 @@ class _MyHomePageState extends State<MyHomePage> {
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
+        onPressed: () {
+          // 跳转到 GetX 计数器示例页面
+          // RouterHelper.push(CounterRoute());
+          RouterHelper.push(LanguageSettingsRoute());
+        },
+        tooltip: '打开计数器',
+        child: const Icon(Icons.calculate),
       ), // This trailing comma makes auto-formatting nicer for build methods.
     );
   }
