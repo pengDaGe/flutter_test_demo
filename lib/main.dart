@@ -12,9 +12,12 @@ import 'utils/router_helper.dart';
 import 'theme/app_themes.dart'; // ✅ 导入应用主题
 import 'theme/theme_helper.dart'; // ✅ 导入主题工具类
 import 'theme/theme_controller.dart'; // ✅ 导入主题控制器
+import 'utils/logger.dart'; // ✅ 导入日志工具类
+
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  Log.init(); // ✅ 初始化日志工具类
   await LanguageHelper.init(); // 初始化语言
   ThemeHelper.init(); // ✅ 初始化主题
   runApp(MyApp());

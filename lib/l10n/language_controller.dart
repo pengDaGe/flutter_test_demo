@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../utils/logger.dart';
+
 /// 支持的语言枚举
 enum AppLanguage {
   zhCN, // 简体中文
@@ -131,6 +133,7 @@ class LanguageController extends GetxController {
 
   /// 切换语言
   Future<void> changeLanguage(AppLanguage language) async {
+    Log.d("当前的语言为${language.code}");
     if (currentLanguage.value == language) return;
 
     currentLanguage.value = language;
