@@ -67,14 +67,14 @@ class _SplashPageState extends State<SplashPage> with SingleTickerProviderStateM
     _navigateToHome();
   }
 
-  /// 导航到主页
+  /// 导航到登录页
   Future<void> _navigateToHome() async {
     await Future.delayed(const Duration(milliseconds: 2500));
     if (mounted) {
-      // 使用类型安全的路由跳转
+      // 使用类型安全的路由跳转到登录页
       RouterHelper.replaceAllWithContext(
         context,
-        MyHomeRoute(title: 'Flutter Demo Home Page'),
+        LoginRoute(showCloseButton: false),
       );
     }
   }

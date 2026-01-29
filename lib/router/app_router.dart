@@ -4,6 +4,7 @@ import '../splash_page.dart';
 import '../main.dart';
 import '../examples/counter_page.dart';
 import '../examples/language_settings_page.dart';
+import '../login_page.dart';
 
 part 'app_router.gr.dart';
 
@@ -38,6 +39,12 @@ class AppRouter extends RootStackRouter {
     AutoRoute(
       page: LanguageSettingsRoute.page,
       path: '/language-settings',
+    ),
+    
+    // 登录页面
+    AutoRoute(
+      page: LoginRoute.page,
+      path: '/login',
     ),
   ];
 }

@@ -13,6 +13,7 @@ import 'theme/app_themes.dart'; // ✅ 导入应用主题
 import 'theme/theme_helper.dart'; // ✅ 导入主题工具类
 import 'theme/theme_controller.dart'; // ✅ 导入主题控制器
 import 'utils/logger.dart'; // ✅ 导入日志工具类
+import 'utils/toast_utils.dart'; // ✅ 导入 Toast 工具类
 
 
 void main() async {
@@ -42,30 +43,32 @@ class MyApp extends StatelessWidget {
       final currentLocale = languageController.currentLocale;
       final themeMode = themeController.themeMode.value;
 
-      return MaterialApp.router(
-        title: 'Flutter Demo',
+      return ToastUtils.init(
+        MaterialApp.router(
+          title: 'Flutter Demo',
 
-        // 使用当前语言
-        locale: currentLocale,
-        localizationsDelegates: const [
-          GlobalMaterialLocalizations.delegate,
-          GlobalCupertinoLocalizations.delegate,
-          GlobalWidgetsLocalizations.delegate,
-        ],
-        supportedLocales: const [
-          Locale('zh', 'CN'),
-          Locale('zh', 'TW'),
-          Locale('en', 'US'),
-          Locale('ja', 'JP'),
-        ],
+          // 使用当前语言
+          locale: currentLocale,
+          localizationsDelegates: const [
+            GlobalMaterialLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+          ],
+          supportedLocales: const [
+            Locale('zh', 'CN'),
+            Locale('zh', 'TW'),
+            Locale('en', 'US'),
+            Locale('ja', 'JP'),
+          ],
 
-        // ✅ 配置主题
-        theme: AppThemes.lightTheme,
-        darkTheme: AppThemes.darkTheme,
-        themeMode: themeController.getThemeMode(),
+          // ✅ 配置主题
+          theme: AppThemes.lightTheme,
+          darkTheme: AppThemes.darkTheme,
+          themeMode: themeController.getThemeMode(),
 
-        // AutoRoute 路由配置
-        routerConfig: _appRouter.config(),
+          // AutoRoute 路由配置
+          routerConfig: _appRouter.config(),
+        ),
       );
     });
   }

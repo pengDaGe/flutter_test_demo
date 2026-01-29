@@ -33,6 +33,39 @@ class AppStrings {
   /// 忘记密码
   static const String forgotPassword = 'forgotPassword';
 
+  /// 欢迎来到 Nice AI
+  static const String welcomeToNiceAI = 'welcomeToNiceAI';
+
+  /// 您的全能 AI 助手
+  static const String allInOneAIAssistant = 'allInOneAIAssistant';
+
+  /// 使用 Google 登录
+  static const String continueWithGoogle = 'continueWithGoogle';
+
+  /// 使用 Apple 登录
+  static const String continueWithApple = 'continueWithApple';
+
+  /// 使用 Facebook 登录
+  static const String continueWithFacebook = 'continueWithFacebook';
+
+  /// 使用电子邮箱登录
+  static const String continueWithEmail = 'continueWithEmail';
+
+  /// 如果您正在创建新账户
+  static const String creatingNewAccount = 'creatingNewAccount';
+
+  /// 服务条款
+  static const String termsConditions = 'termsConditions';
+
+  /// 隐私政策
+  static const String privacyPolicy = 'privacyPolicy';
+
+  /// 将会适用
+  static const String willApply = 'willApply';
+
+  /// 和
+  static const String and = 'and';
+
   // ==================== 通用文本 ====================
   
   /// 欢迎
@@ -170,6 +203,17 @@ class AppStrings {
         noData,
         loadFailed,
         retry,
+        welcomeToNiceAI,
+        allInOneAIAssistant,
+        continueWithGoogle,
+        continueWithApple,
+        continueWithFacebook,
+        continueWithEmail,
+        creatingNewAccount,
+        termsConditions,
+        privacyPolicy,
+        willApply,
+        and,
       ];
   
   /// 检查 key 是否存在

@@ -43,6 +43,45 @@ class LanguageSettingsRoute extends PageRouteInfo<void> {
 }
 
 /// generated route for
+/// [LoginPage]
+class LoginRoute extends PageRouteInfo<LoginRouteArgs> {
+  LoginRoute({
+    Key? key,
+    bool showCloseButton = true,
+    List<PageRouteInfo>? children,
+  }) : super(
+         LoginRoute.name,
+         args: LoginRouteArgs(key: key, showCloseButton: showCloseButton),
+         initialChildren: children,
+       );
+
+  static const String name = 'LoginRoute';
+
+  static PageInfo page = PageInfo(
+    name,
+    builder: (data) {
+      final args = data.argsAs<LoginRouteArgs>(
+        orElse: () => const LoginRouteArgs(),
+      );
+      return LoginPage(key: args.key, showCloseButton: args.showCloseButton);
+    },
+  );
+}
+
+class LoginRouteArgs {
+  const LoginRouteArgs({this.key, this.showCloseButton = true});
+
+  final Key? key;
+
+  final bool showCloseButton;
+
+  @override
+  String toString() {
+    return 'LoginRouteArgs{key: $key, showCloseButton: $showCloseButton}';
+  }
+}
+
+/// generated route for
 /// [MyHomePage]
 class MyHomeRoute extends PageRouteInfo<MyHomeRouteArgs> {
   MyHomeRoute({Key? key, required String title, List<PageRouteInfo>? children})
