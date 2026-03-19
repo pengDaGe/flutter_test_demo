@@ -7,7 +7,7 @@ plugins {
 
 android {
     namespace = "com.example.flutter_test_demo"
-    compileSdk = 35
+    compileSdk = 36
     ndkVersion = "29.0.13113456"
 
     compileOptions {

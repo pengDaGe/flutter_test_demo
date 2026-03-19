@@ -52,6 +52,8 @@ dependencies:
   # 日志
   logging: ^1.2.0
   oktoast: ^3.4.0
+  cached_network_image: ^3.4.1
+  shimmer_animation: ^2.2.2+1
 
 dev_dependencies:
   flutter_test:
@@ -83,6 +85,7 @@ flutter:
   assets:
     - assets/images/ni_logo.png
     - assets/images/login/
+    - assets/data/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

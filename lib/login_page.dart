@@ -1,20 +1,16 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_test_demo/utils/toast_utils.dart';
-import 'package:get/get.dart'  hide Trans;  // 隐藏 GetX 的 Trans 扩展
+import 'effects_discover_page.dart';
 import 'l10n/app_strings.dart';
 import 'widgets/login_social_button.dart';
-import 'l10n/translation_service.dart';  // 添加自定义翻译服务
+import 'l10n/translation_service.dart'; // 添加自定义翻译服务
 
 @RoutePage()
 class LoginPage extends StatelessWidget {
   final bool showCloseButton;
 
-  const LoginPage({
-    super.key,
-    this.showCloseButton = true,
-  });
+  const LoginPage({super.key, this.showCloseButton = true});
 
   @override
   Widget build(BuildContext context) {
@@ -32,7 +28,7 @@ class LoginPage extends StatelessWidget {
               fit: BoxFit.cover,
             ),
           ),
-          
+
           // 关闭按钮
           if (showCloseButton)
             Positioned(
@@ -58,7 +54,7 @@ class LoginPage extends StatelessWidget {
                       borderRadius: BorderRadius.circular(20),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
+                          color: Colors.black.withValues(alpha: 0.05),
                           blurRadius: 20,
                           offset: const Offset(0, 10),
                         ),
@@ -71,9 +67,9 @@ class LoginPage extends StatelessWidget {
                     ),
                   ),
                 ),
-                
+
                 const SizedBox(height: 60),
-                
+
                 // 欢迎文本
                 Text(
                   AppStrings.welcomeToNiceAI.tr,
@@ -92,15 +88,19 @@ class LoginPage extends StatelessWidget {
                     color: Colors.black87,
                   ),
                 ),
-                
+
                 const Spacer(),
-                
+
                 // 社交登录按钮
                 SocialLoginButton(
                   iconPath: 'assets/images/login/icon_login_google.png',
                   text: AppStrings.continueWithGoogle.tr,
                   onPressed: () {
-                    ToastUtils.show("点击了谷歌登录按钮");
+                    Navigator.of(context).pushReplacement(
+                      MaterialPageRoute<void>(
+                        builder: (_) => const EffectsDiscoverPage(),
+                      ),
+                    );
                   },
                 ),
                 SocialLoginButton(
@@ -118,9 +118,9 @@ class LoginPage extends StatelessWidget {
                   text: AppStrings.continueWithEmail.tr,
                   onPressed: () {},
                 ),
-                
+
                 const SizedBox(height: 40),
-                
+
                 // 用户协议提示
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 40),
@@ -145,13 +145,17 @@ class LoginPage extends StatelessWidget {
                           children: [
                             TextSpan(
                               text: AppStrings.termsConditions.tr,
-                              style: const TextStyle(decoration: TextDecoration.underline),
+                              style: const TextStyle(
+                                decoration: TextDecoration.underline,
+                              ),
                               recognizer: TapGestureRecognizer()..onTap = () {},
                             ),
                             TextSpan(text: AppStrings.and.tr),
                             TextSpan(
                               text: AppStrings.privacyPolicy.tr,
-                              style: const TextStyle(decoration: TextDecoration.underline),
+                              style: const TextStyle(
+                                decoration: TextDecoration.underline,
+                              ),
                               recognizer: TapGestureRecognizer()..onTap = () {},
                             ),
                             TextSpan(text: AppStrings.willApply.tr),
