@@ -54,6 +54,8 @@ dependencies:
   oktoast: ^3.4.0
   cached_network_image: ^3.4.1
   shimmer_animation: ^2.2.2+1
+  flutter_image_compress: ^2.3.0
+  flutter_cache_manager: ^3.4.1
 
 dev_dependencies:
   flutter_test:

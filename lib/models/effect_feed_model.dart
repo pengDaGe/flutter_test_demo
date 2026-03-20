@@ -108,6 +108,8 @@ class EffectItemModel {
     required this.collectionPreviewImgUrlV2,
     required this.collectionPreviewWebpUrl,
     required this.collectionPreviewWebpUrlV2,
+    required this.bannerPreviewImageUrl,
+    required this.labels,
     required this.providers,
   });
 
@@ -122,6 +124,8 @@ class EffectItemModel {
   final String? collectionPreviewImgUrlV2;
   final String? collectionPreviewWebpUrl;
   final String? collectionPreviewWebpUrlV2;
+  final String? bannerPreviewImageUrl;
+  final List<int> labels;
   final List<EffectProviderModel> providers;
 
   String get displayTitle => title.trim().isEmpty ? 'Untitled' : title.trim();
@@ -138,6 +142,7 @@ class EffectItemModel {
   }
 
   String? get bannerImageUrl => _firstNonEmpty([
+    bannerPreviewImageUrl,
     bannerPreviewWebpUrlV2,
     bannerPreviewWebpUrl,
     collectionPreviewImgUrlV2,
@@ -146,7 +151,11 @@ class EffectItemModel {
     ...previewImages,
   ]);
 
+  String? get bannerStaticImageUrl =>
+      _firstNonWebp([collectionPreviewImgUrlV2, ...previewImages]);
+
   String? get cardImageUrl => _firstNonEmpty([
+    bannerPreviewImageUrl,
     collectionPreviewWebpUrlV2,
     collectionPreviewImgUrlV2,
     collectionPreviewWebpUrl,
@@ -154,6 +163,9 @@ class EffectItemModel {
     bannerPreviewWebpUrl,
     ...previewImages,
   ]);
+
+  String? get cardStaticImageUrl =>
+      _firstNonWebp([collectionPreviewImgUrlV2, ...previewImages]);
 
   EffectProviderModel? get primaryProvider =>
       providers.isEmpty ? null : providers.first;
@@ -177,6 +189,8 @@ class EffectItemModel {
       collectionPreviewImgUrlV2: json['collectionPreviewImgUrlV2'] as String?,
       collectionPreviewWebpUrl: json['collectionPreviewWebpUrl'] as String?,
       collectionPreviewWebpUrlV2: json['collectionPreviewWebpUrlV2'] as String?,
+      bannerPreviewImageUrl: json['bannerPreviewImageUrl'] as String?,
+      labels: (json['labels'] as List?)?.cast<int>() ?? const [],
       providers: _parseList(
         json['providers'],
         (item) => EffectProviderModel.fromJson(item),
@@ -239,5 +253,20 @@ String? _firstNonEmpty(List<String?> values) {
       return value;
     }
   }
+  return null;
+}
+
+String? _firstNonWebp(List<String?> values) {
+  for (final value in values) {
+    final normalized = value?.trim();
+    if (normalized == null || normalized.isEmpty) {
+      continue;
+    }
+
+    if (!normalized.toLowerCase().endsWith('.webp')) {
+      return normalized;
+    }
+  }
+
   return null;
 }

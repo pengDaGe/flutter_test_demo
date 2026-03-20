@@ -5,6 +5,8 @@ import 'effects_discover_page.dart';
 import 'l10n/app_strings.dart';
 import 'widgets/login_social_button.dart';
 import 'l10n/translation_service.dart'; // 添加自定义翻译服务
+import 'router/app_router.dart';
+import 'utils/router_helper.dart';
 
 @RoutePage()
 class LoginPage extends StatelessWidget {
@@ -96,17 +98,17 @@ class LoginPage extends StatelessWidget {
                   iconPath: 'assets/images/login/icon_login_google.png',
                   text: AppStrings.continueWithGoogle.tr,
                   onPressed: () {
-                    Navigator.of(context).pushReplacement(
-                      MaterialPageRoute<void>(
-                        builder: (_) => const EffectsDiscoverPage(),
-                      ),
-                    );
+                    // 谷歌登录跳转到发现主页面
+                    RouterHelper.replaceAll(const DiscoverMainRoute());
                   },
                 ),
                 SocialLoginButton(
                   iconPath: 'assets/images/login/icon_login_apple.png',
                   text: AppStrings.continueWithApple.tr,
-                  onPressed: () {},
+                  onPressed: () {
+                    // 苹果登录跳转到 Vibeo 主界面
+                    RouterHelper.replaceAll(const VibeoMainRoute());
+                  },
                 ),
                 SocialLoginButton(
                   iconPath: 'assets/images/login/icon_login_facebook.png',

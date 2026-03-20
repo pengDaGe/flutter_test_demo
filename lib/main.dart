@@ -154,13 +154,13 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          // 跳转到 GetX 计数器示例页面
-          // RouterHelper.push(CounterRoute());
-          RouterHelper.push(LanguageSettingsRoute());
+          // 跳转到 Vibeo 主界面
+          RouterHelper.push(const VibeoMainRoute());
         },
-        tooltip: '打开计数器',
-        child: const Icon(Icons.calculate),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
+        tooltip: '打开 Vibeo',
+        child: const Icon(Icons.vibration),
+      ),
+ // This trailing comma makes auto-formatting nicer for build methods.
     );
   }
 }

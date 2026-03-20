@@ -5,6 +5,12 @@ import '../main.dart';
 import '../examples/counter_page.dart';
 import '../examples/language_settings_page.dart';
 import '../login_page.dart';
+import '../video_generating_page.dart';
+import '../vibeo_main_page.dart';
+import '../create_video_page.dart';
+import '../video_result_page.dart';
+import '../effects_discover_page.dart';
+import '../discover_main_page.dart';
 
 part 'app_router.gr.dart';
 
@@ -45,6 +51,42 @@ class AppRouter extends RootStackRouter {
     AutoRoute(
       page: LoginRoute.page,
       path: '/login',
+    ),
+    
+    // Vibeo 主界面
+    AutoRoute(
+      page: VibeoMainRoute.page,
+      path: '/vibeo-main',
+    ),
+    
+    // 创建视频页面
+    AutoRoute(
+      page: CreateVideoRoute.page,
+      path: '/create-video',
+    ),
+    
+    // 视频生成中页面
+    AutoRoute(
+      page: VideoGeneratingRoute.page,
+      path: '/video-generating',
+    ),
+    
+    // 视频结果页面
+    AutoRoute(
+      page: VideoResultRoute.page,
+      path: '/video-result',
+    ),
+    
+    // 发现主页面（包含 Video 和 Image 标签）
+    AutoRoute(
+      page: DiscoverMainRoute.page,
+      path: '/discover-main',
+    ),
+    
+    // 发现列表页面
+    AutoRoute(
+      page: EffectsDiscoverRoute.page,
+      path: '/effects-discover',
     ),
   ];
 }

@@ -1,14 +1,18 @@
 import 'dart:convert';
+import 'package:auto_route/auto_route.dart';
 
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shimmer_animation/shimmer_animation.dart';
 
 import 'models/effect_feed_model.dart';
 
+@RoutePage()
 class EffectsDiscoverPage extends StatefulWidget {
-  const EffectsDiscoverPage({super.key});
+  final String type; // 'video' or 'image'
+  const EffectsDiscoverPage({super.key, this.type = 'video'});
 
   @override
   State<EffectsDiscoverPage> createState() => _EffectsDiscoverPageState();
@@ -106,26 +110,30 @@ class _EffectsDiscoverPageState extends State<EffectsDiscoverPage> {
 
                   final query = _searchQuery.trim();
                   if (query.isNotEmpty) {
-                    final results = _searchSections(feed.videos, query);
-                    return _buildSearchResults(query, results);
+                    final results = _searchSections(
+                        widget.type == 'video' ? feed.videos : feed.images, query);
+                    return _buildSearchResults(query, results, feed);
                   }
 
-                  final bannerSection = _findBannerSection(feed.videos);
-                  final collectionSections = feed.videos
-                      .where(
-                        (section) => section.isCollection && section.hasItems,
-                      )
-                      .toList(growable: false);
+                  final sections =
+                      widget.type == 'video' ? feed.videos : feed.images;
+                  final bannerSections =
+                      sections.where((s) => s.isBanner && s.hasItems).toList();
+                  final collectionSections =
+                      sections.where((s) => !s.isBanner && s.hasItems).toList();
 
                   return ListView(
                     padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
                     physics: const BouncingScrollPhysics(),
                     children: [
-                      if (bannerSection != null) ...[
-                        _buildBannerSection(bannerSection),
-                        const SizedBox(height: 28),
-                      ],
-                      ...collectionSections.map(_buildCollectionSection),
+                      ...bannerSections.map((section) => Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              _buildBannerSection(section, feed),
+                              const SizedBox(height: 28),
+                            ],
+                          )),
+                      ...collectionSections.map((s) => _buildCollectionSection(s, feed)),
                       const SizedBox(height: 18),
                     ],
                   );
@@ -147,7 +155,7 @@ class _EffectsDiscoverPageState extends State<EffectsDiscoverPage> {
     return null;
   }
 
-  Widget _buildBannerSection(EffectSectionModel section) {
+  Widget _buildBannerSection(EffectSectionModel section, EffectFeedModel feed) {
     final items = section.items;
     if (_currentBannerIndex >= items.length) {
       _currentBannerIndex = 0;
@@ -170,10 +178,15 @@ class _EffectsDiscoverPageState extends State<EffectsDiscoverPage> {
               },
               itemBuilder: (context, index) {
                 final item = items[index];
-                return Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    _NetworkImageFill(imageUrl: item.bannerImageUrl),
+                return GestureDetector(
+                  onTap: () => _showEffectDetailDialog(item, feed),
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                    _NetworkImageFill(
+                      imageUrl: item.bannerImageUrl,
+                      staticImageUrl: item.bannerStaticImageUrl,
+                    ),
                     DecoratedBox(
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
@@ -204,7 +217,8 @@ class _EffectsDiscoverPageState extends State<EffectsDiscoverPage> {
                         ),
                       ),
                     ),
-                  ],
+                    ],
+                  ),
                 );
               },
             ),
@@ -235,17 +249,19 @@ class _EffectsDiscoverPageState extends State<EffectsDiscoverPage> {
     );
   }
 
-  Widget _buildCollectionSection(EffectSectionModel section) {
+  Widget _buildCollectionSection(EffectSectionModel section, EffectFeedModel feed) {
     return _buildItemsSection(
       title: section.displayTitle,
       leadingEmoji: section.leadingEmoji,
       items: section.items,
+      feed: feed,
     );
   }
 
   Widget _buildItemsSection({
     required String title,
     required List<EffectItemModel> items,
+    required EffectFeedModel feed,
     String? leadingEmoji,
   }) {
     return Padding(
@@ -269,7 +285,7 @@ class _EffectsDiscoverPageState extends State<EffectsDiscoverPage> {
                   child: _EffectCard(
                     item: item,
                     panelColor: _panelColor,
-                    onTap: () => _showEffectDetailDialog(item),
+                    onTap: () => _showEffectDetailDialog(item, feed),
                   ),
                 );
               },
@@ -280,7 +296,7 @@ class _EffectsDiscoverPageState extends State<EffectsDiscoverPage> {
     );
   }
 
-  Widget _buildSearchResults(String query, List<_SearchSectionResult> results) {
+  Widget _buildSearchResults(String query, List<_SearchSectionResult> results, EffectFeedModel feed) {
     final resultCount = results.fold<int>(
       0,
       (sum, result) => sum + result.items.length,
@@ -340,6 +356,7 @@ class _EffectsDiscoverPageState extends State<EffectsDiscoverPage> {
             title: result.section.displayTitle,
             leadingEmoji: result.section.leadingEmoji,
             items: result.items,
+            feed: feed,
           ),
         ),
       ],
@@ -458,29 +475,64 @@ class _EffectsDiscoverPageState extends State<EffectsDiscoverPage> {
       );
   }
 
-  Future<void> _showEffectDetailDialog(EffectItemModel item) {
+  Future<void> _copyAll(EffectItemModel item) async {
+    final buffer = StringBuffer();
+
+    final desc = item.description.trim();
+    buffer.writeln('Prompt (提示词):');
+    buffer.writeln(desc.isEmpty ? '-' : desc);
+
+    if (item.inputImageUrls.isNotEmpty) {
+      buffer.writeln('\nInput Images (输入图片):');
+      for (var i = 0; i < item.inputImageUrls.length; i++) {
+        buffer.writeln(item.inputImageUrls[i]);
+      }
+    }
+
+    final text = buffer.toString().trim();
+    if (text.isEmpty) {
+      return;
+    }
+
+    await Clipboard.setData(ClipboardData(text: text));
+    if (!mounted) {
+      return;
+    }
+
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        const SnackBar(
+          content: Text('素材已复制，去开启你的创作吧！'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+  }
+
+  Future<void> _showEffectDetailDialog(EffectItemModel item, EffectFeedModel feed) {
     return showDialog<void>(
       context: context,
       builder: (dialogContext) {
         final size = MediaQuery.of(dialogContext).size;
         final coinText = item.coin?.toString() ?? '-';
-        final description = item.description.trim().isEmpty
-            ? '-'
-            : item.description;
-        final providerName = item.providerName.trim().isEmpty
-            ? '-'
-            : item.providerName;
+        final description = item.description.trim().isEmpty ? '-' : item.description;
+        final providerName = item.providerName.trim().isEmpty ? '-' : item.providerName;
         final imageUrls = item.inputImageUrls;
+
+        // 获取标签名称
+        final labels = <String>[];
+        final allLabelModels = [...feed.videoLabels, ...feed.imageLabels];
+        for (final labelId in item.labels) {
+          final model = allLabelModels.where((l) => l.id == labelId).firstOrNull;
+          if (model != null && model.title.isNotEmpty) {
+            labels.add(model.title);
+          }
+        }
 
         return Dialog(
           backgroundColor: _panelColor,
-          insetPadding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 24,
-          ),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(28),
-          ),
+          insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
           child: ConstrainedBox(
             constraints: BoxConstraints(
               maxWidth: 520,
@@ -491,6 +543,31 @@ class _EffectsDiscoverPageState extends State<EffectsDiscoverPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  if (labels.isNotEmpty) ...[
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: labels.map((label) {
+                        return Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF2D3344),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+                          ),
+                          child: Text(
+                            label,
+                            style: const TextStyle(
+                              color: Color(0xFFA855F7),
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -514,11 +591,26 @@ class _EffectsDiscoverPageState extends State<EffectsDiscoverPage> {
                   ),
                   const SizedBox(height: 16),
                   if (item.cardImageUrl != null) ...[
+                    const Padding(
+                      padding: EdgeInsets.only(bottom: 10),
+                      child: Text(
+                        '生成结果图片',
+                        style: TextStyle(
+                          color: Colors.white70,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
                     ClipRRect(
                       borderRadius: BorderRadius.circular(20),
                       child: AspectRatio(
                         aspectRatio: 16 / 10,
-                        child: _NetworkImageFill(imageUrl: item.cardImageUrl),
+                        child: _NetworkImageFill(
+                          imageUrl: item.cardImageUrl,
+                          staticImageUrl: item.cardStaticImageUrl,
+                          fit: BoxFit.contain,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -563,6 +655,30 @@ class _EffectsDiscoverPageState extends State<EffectsDiscoverPage> {
                         ),
                       );
                     }),
+                  const SizedBox(height: 24),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 56,
+                    child: ElevatedButton.icon(
+                      onPressed: () => _copyAll(item),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFA855F7), // 紫色主题色
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(18),
+                        ),
+                        elevation: 0,
+                      ),
+                      icon: const Icon(Icons.auto_awesome_rounded), // 使用创作图标
+                      label: const Text(
+                        '我要创作',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -705,7 +821,10 @@ class _EffectCard extends StatelessWidget {
           children: [
             DecoratedBox(
               decoration: BoxDecoration(color: panelColor),
-              child: _NetworkImageFill(imageUrl: item.cardImageUrl),
+              child: _NetworkImageFill(
+                imageUrl: item.cardImageUrl,
+                staticImageUrl: item.cardStaticImageUrl,
+              ),
             ),
             DecoratedBox(
               decoration: BoxDecoration(
@@ -855,7 +974,10 @@ class _InputImageCard extends StatelessWidget {
             borderRadius: BorderRadius.circular(16),
             child: AspectRatio(
               aspectRatio: 1,
-              child: _NetworkImageFill(imageUrl: imageUrl),
+              child: _NetworkImageFill(
+                imageUrl: imageUrl,
+                fit: BoxFit.contain,
+              ),
             ),
           ),
         ],
@@ -910,6 +1032,9 @@ class _CardPreviewAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final devicePixelRatio = MediaQuery.devicePixelRatioOf(context);
+    final avatarCacheSize = (42 * devicePixelRatio).ceil();
+
     return Container(
       width: 42,
       height: 42,
@@ -926,16 +1051,23 @@ class _CardPreviewAvatar extends StatelessWidget {
         ],
       ),
       child: ClipOval(
-        child: CachedNetworkImage(
-          imageUrl: imageUrl,
-          fit: BoxFit.cover,
-          fadeInDuration: const Duration(milliseconds: 220),
-          placeholder: (_, __) => const _ShimmerPlaceholder(
-            shape: BoxShape.circle,
-            backgroundColor: Color(0xFF3A4152),
-            child: Icon(Icons.person, color: Colors.white38, size: 18),
+        child: RepaintBoundary(
+          child: CachedNetworkImage(
+            imageUrl: imageUrl,
+            fit: BoxFit.cover,
+            fadeInDuration: const Duration(milliseconds: 120),
+            placeholderFadeInDuration: Duration.zero,
+            memCacheWidth: avatarCacheSize,
+            memCacheHeight: avatarCacheSize,
+            useOldImageOnUrlChange: true,
+            filterQuality: FilterQuality.low,
+            placeholder: (_, __) => const _ShimmerPlaceholder(
+              shape: BoxShape.circle,
+              backgroundColor: Color(0xFF3A4152),
+              child: Icon(Icons.person, color: Colors.white38, size: 18),
+            ),
+            errorWidget: (_, __, ___) => const _PreviewAvatarFallback(),
           ),
-          errorWidget: (_, __, ___) => const _PreviewAvatarFallback(),
         ),
       ),
     );
@@ -1001,27 +1133,443 @@ class _Badge extends StatelessWidget {
   }
 }
 
-class _NetworkImageFill extends StatelessWidget {
-  const _NetworkImageFill({required this.imageUrl});
-
+class _NetworkImageFill extends StatefulWidget {
   final String? imageUrl;
+  final String? staticImageUrl;
+  final BoxFit fit;
+
+  const _NetworkImageFill({
+    required this.imageUrl,
+    this.staticImageUrl,
+    this.fit = BoxFit.cover,
+  });
+
+  static const _maxCacheDimension = 2048;
+  static const _visibleFractionThreshold = 0.15;
+  static const _prewarmViewportMargin = 240.0;
+
+  @override
+  State<_NetworkImageFill> createState() => _NetworkImageFillState();
+}
+
+class _NetworkImageFillState extends State<_NetworkImageFill>
+    with WidgetsBindingObserver {
+  final Set<ScrollPosition> _observedPositions = <ScrollPosition>{};
+  final Object _playbackToken = Object();
+  bool _isVisible = false;
+  bool _isAnimationGranted = false;
+  bool _visibilityUpdateScheduled = false;
+  _ResolvedImageCacheSize? _lastCacheSize;
+  String? _prewarmingWebpKey;
+  String? _prewarmedWebpKey;
+  _ViewportState _viewportState = const _ViewportState();
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _androidWebpPlaybackController.addListener(_handlePlaybackBudgetChanged);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _bindScrollPositions();
+    _scheduleVisibilityUpdate();
+  }
+
+  @override
+  void didUpdateWidget(covariant _NetworkImageFill oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.imageUrl != oldWidget.imageUrl ||
+        widget.staticImageUrl != oldWidget.staticImageUrl) {
+      _androidWebpPlaybackController.remove(_playbackToken);
+      _prewarmingWebpKey = null;
+      _prewarmedWebpKey = null;
+      _isAnimationGranted = false;
+      _scheduleVisibilityUpdate();
+    }
+  }
+
+  @override
+  void didChangeMetrics() {
+    _scheduleVisibilityUpdate();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _androidWebpPlaybackController.removeListener(_handlePlaybackBudgetChanged);
+    _androidWebpPlaybackController.remove(_playbackToken);
+    for (final position in _observedPositions) {
+      position.removeListener(_handleViewportChange);
+    }
+    _observedPositions.clear();
+    super.dispose();
+  }
+
+  void _bindScrollPositions() {
+    final positions = _collectAncestorScrollPositions();
+    if (setEquals(positions, _observedPositions)) {
+      return;
+    }
+
+    for (final position in _observedPositions.difference(positions)) {
+      position.removeListener(_handleViewportChange);
+    }
+
+    for (final position in positions.difference(_observedPositions)) {
+      position.addListener(_handleViewportChange);
+    }
+
+    _observedPositions
+      ..clear()
+      ..addAll(positions);
+  }
+
+  Set<ScrollPosition> _collectAncestorScrollPositions() {
+    final positions = <ScrollPosition>{};
+
+    context.visitAncestorElements((element) {
+      if (element is StatefulElement && element.state is ScrollableState) {
+        positions.add((element.state as ScrollableState).position);
+      }
+      return true;
+    });
+
+    return positions;
+  }
+
+  void _handleViewportChange() {
+    _scheduleVisibilityUpdate();
+  }
+
+  void _scheduleVisibilityUpdate() {
+    if (!mounted || _visibilityUpdateScheduled) {
+      return;
+    }
+
+    _visibilityUpdateScheduled = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _visibilityUpdateScheduled = false;
+      if (!mounted) {
+        return;
+      }
+      _updateVisibility();
+    });
+  }
+
+  void _updateVisibility() {
+    final viewportState = _calculateViewportState();
+    _viewportState = viewportState;
+    final isVisible =
+        viewportState.visibleFraction >
+        _NetworkImageFill._visibleFractionThreshold;
+
+    if (viewportState.isNearViewport) {
+      _maybePrewarmWebp();
+    }
+
+    _syncAndroidPlaybackBudget();
+
+    if (isVisible == _isVisible) {
+      return;
+    }
+
+    setState(() {
+      _isVisible = isVisible;
+    });
+  }
+
+  _ViewportState _calculateViewportState() {
+    final renderObject = context.findRenderObject();
+    if (renderObject is! RenderBox ||
+        !renderObject.attached ||
+        !renderObject.hasSize) {
+      return const _ViewportState();
+    }
+
+    final totalRect = MatrixUtils.transformRect(
+      renderObject.getTransformTo(null),
+      Offset.zero & renderObject.size,
+    );
+    if (totalRect.isEmpty) {
+      return const _ViewportState();
+    }
+
+    final screenRect = Offset.zero & MediaQuery.sizeOf(context);
+    final visibleRect = totalRect.intersect(screenRect);
+    final totalArea = totalRect.width * totalRect.height;
+    if (totalArea <= 0) {
+      return const _ViewportState();
+    }
+
+    final visibleArea = visibleRect.isEmpty
+        ? 0.0
+        : visibleRect.width * visibleRect.height;
+    final prewarmRect = screenRect.inflate(
+      _NetworkImageFill._prewarmViewportMargin,
+    );
+
+    return _ViewportState(
+      visibleFraction: visibleArea / totalArea,
+      isNearViewport: totalRect.overlaps(prewarmRect),
+      totalArea: totalArea,
+      distanceToViewportCenter: (totalRect.center - screenRect.center).distance,
+    );
+  }
+
+  void _syncAndroidPlaybackBudget() {
+    if (!_shouldParticipateInAndroidPlaybackBudget) {
+      _androidWebpPlaybackController.remove(_playbackToken);
+      return;
+    }
+
+    _androidWebpPlaybackController.upsert(
+      _AndroidWebpPlaybackCandidate(
+        token: _playbackToken,
+        score: _calculateAnimationScore(),
+      ),
+    );
+  }
+
+  bool get _shouldParticipateInAndroidPlaybackBudget {
+    final webpUrl = widget.imageUrl?.trim() ?? '';
+    final fallbackUrl = widget.staticImageUrl?.trim() ?? '';
+    final isCurrentlyVisible =
+        _viewportState.visibleFraction >
+        _NetworkImageFill._visibleFractionThreshold;
+
+    return defaultTargetPlatform == TargetPlatform.android &&
+        isCurrentlyVisible &&
+        webpUrl.toLowerCase().endsWith('.webp') &&
+        fallbackUrl.isNotEmpty &&
+        fallbackUrl != webpUrl;
+  }
+
+  double _calculateAnimationScore() {
+    const visibleWeight = 1000000.0;
+    const centerPenaltyWeight = 120.0;
+
+    return _viewportState.visibleFraction * visibleWeight +
+        _viewportState.totalArea -
+        _viewportState.distanceToViewportCenter * centerPenaltyWeight;
+  }
+
+  void _handlePlaybackBudgetChanged() {
+    final isGranted = _androidWebpPlaybackController.isGranted(_playbackToken);
+    if (isGranted == _isAnimationGranted || !mounted) {
+      return;
+    }
+
+    setState(() {
+      _isAnimationGranted = isGranted;
+    });
+  }
+
+  void _maybePrewarmWebp() {
+    final webpUrl = widget.imageUrl?.trim() ?? '';
+    final fallbackUrl = widget.staticImageUrl?.trim() ?? '';
+    final cacheSize = _lastCacheSize;
+    if (webpUrl.isEmpty ||
+        cacheSize == null ||
+        !webpUrl.toLowerCase().endsWith('.webp') ||
+        fallbackUrl.isEmpty ||
+        fallbackUrl == webpUrl) {
+      return;
+    }
+
+    final prewarmKey =
+        '$webpUrl:${cacheSize.width ?? 0}x${cacheSize.height ?? 0}';
+    if (_prewarmedWebpKey == prewarmKey || _prewarmingWebpKey == prewarmKey) {
+      return;
+    }
+
+    _prewarmingWebpKey = prewarmKey;
+
+    final provider = ResizeImage.resizeIfNeeded(
+      cacheSize.width,
+      cacheSize.height,
+      CachedNetworkImageProvider(webpUrl),
+    );
+
+    precacheImage(provider, context)
+        .then((_) {
+          if (!mounted || _prewarmingWebpKey != prewarmKey) {
+            return;
+          }
+          _prewarmingWebpKey = null;
+          _prewarmedWebpKey = prewarmKey;
+        })
+        .catchError((Object _) {
+          if (_prewarmingWebpKey == prewarmKey) {
+            _prewarmingWebpKey = null;
+          }
+        });
+  }
 
   @override
   Widget build(BuildContext context) {
-    if (imageUrl == null || imageUrl!.trim().isEmpty) {
+    final url = widget.imageUrl?.trim() ?? '';
+    if (url.isEmpty) {
       return const _ImageFallback();
     }
 
-    return CachedNetworkImage(
-      imageUrl: imageUrl!,
-      fit: BoxFit.cover,
-      fadeInDuration: const Duration(milliseconds: 240),
-      placeholder: (_, __) =>
-          const _ShimmerPlaceholder(child: _ImageFallback()),
-      errorWidget: (_, __, ___) => const _ImageFallback(),
+    final resolvedUrl = _resolveImageUrl(url);
+    final isWebp = resolvedUrl.toLowerCase().endsWith('.webp');
+
+    return RepaintBoundary(
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final cacheSize = _resolveCacheSize(context, constraints);
+          _lastCacheSize = cacheSize;
+
+          return CachedNetworkImage(
+            imageUrl: resolvedUrl,
+            fit: widget.fit,
+            fadeOutDuration: Duration.zero,
+            fadeInDuration: isWebp
+                ? Duration.zero
+                : const Duration(milliseconds: 240),
+            placeholderFadeInDuration: Duration.zero,
+            filterQuality: isWebp ? FilterQuality.none : FilterQuality.low,
+            memCacheWidth: cacheSize.width,
+            memCacheHeight: cacheSize.height,
+            useOldImageOnUrlChange: true,
+            placeholder: (_, __) =>
+                const _ShimmerPlaceholder(child: _ImageFallback()),
+            errorWidget: (_, __, ___) => const _ImageFallback(),
+          );
+        },
+      ),
     );
   }
+
+  String _resolveImageUrl(String url) {
+    if (!url.toLowerCase().endsWith('.webp')) {
+      return url;
+    }
+
+    final fallbackUrl = widget.staticImageUrl?.trim();
+    if (fallbackUrl == null || fallbackUrl.isEmpty || fallbackUrl == url) {
+      return url;
+    }
+
+    if (!_isVisible) {
+      return fallbackUrl;
+    }
+
+    if (defaultTargetPlatform != TargetPlatform.android) {
+      return url;
+    }
+
+    return _isAnimationGranted ? url : fallbackUrl;
+  }
+
+  _ResolvedImageCacheSize _resolveCacheSize(
+    BuildContext context,
+    BoxConstraints constraints,
+  ) {
+    final devicePixelRatio = MediaQuery.devicePixelRatioOf(context);
+
+    return _ResolvedImageCacheSize(
+      width: _toCacheDimension(
+        constraints.hasBoundedWidth
+            ? constraints.maxWidth * devicePixelRatio
+            : null,
+      ),
+      height: _toCacheDimension(
+        constraints.hasBoundedHeight
+            ? constraints.maxHeight * devicePixelRatio
+            : null,
+      ),
+    );
+  }
+
+  int? _toCacheDimension(double? value) {
+    if (value == null || !value.isFinite || value <= 0) {
+      return null;
+    }
+
+    return value.ceil().clamp(1, _NetworkImageFill._maxCacheDimension);
+  }
 }
+
+class _ResolvedImageCacheSize {
+  const _ResolvedImageCacheSize({this.width, this.height});
+
+  final int? width;
+  final int? height;
+}
+
+class _ViewportState {
+  const _ViewportState({
+    this.visibleFraction = 0,
+    this.isNearViewport = false,
+    this.totalArea = 0,
+    this.distanceToViewportCenter = double.infinity,
+  });
+
+  final double visibleFraction;
+  final bool isNearViewport;
+  final double totalArea;
+  final double distanceToViewportCenter;
+}
+
+class _AndroidWebpPlaybackCandidate {
+  const _AndroidWebpPlaybackCandidate({
+    required this.token,
+    required this.score,
+  });
+
+  final Object token;
+  final double score;
+}
+
+class _AndroidWebpPlaybackController extends ChangeNotifier {
+  _AndroidWebpPlaybackController._();
+
+  static final _AndroidWebpPlaybackController instance =
+      _AndroidWebpPlaybackController._();
+  static const _maxConcurrentAnimations = 6;
+
+  final Map<Object, _AndroidWebpPlaybackCandidate> _entries =
+      <Object, _AndroidWebpPlaybackCandidate>{};
+  Set<Object> _activeTokens = <Object>{};
+
+  bool isGranted(Object token) => _activeTokens.contains(token);
+
+  void upsert(_AndroidWebpPlaybackCandidate candidate) {
+    _entries[candidate.token] = candidate;
+    _recompute();
+  }
+
+  void remove(Object token) {
+    if (_entries.remove(token) == null) {
+      return;
+    }
+    _recompute();
+  }
+
+  void _recompute() {
+    final nextActiveTokens = _entries.values.toList(growable: false)
+      ..sort((a, b) => b.score.compareTo(a.score));
+
+    final activeTokens = nextActiveTokens
+        .take(_maxConcurrentAnimations)
+        .map((candidate) => candidate.token)
+        .toSet();
+
+    if (setEquals(activeTokens, _activeTokens)) {
+      return;
+    }
+
+    _activeTokens = activeTokens;
+    notifyListeners();
+  }
+}
+
+final _androidWebpPlaybackController = _AndroidWebpPlaybackController.instance;
 
 class _ImageFallback extends StatelessWidget {
   const _ImageFallback();
