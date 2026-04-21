@@ -11,6 +11,7 @@ import '../create_video_page.dart';
 import '../video_result_page.dart';
 import '../effects_discover_page.dart';
 import '../discover_main_page.dart';
+import '../podcast_page.dart';
 
 part 'app_router.gr.dart';
 
@@ -87,6 +88,12 @@ class AppRouter extends RootStackRouter {
     AutoRoute(
       page: EffectsDiscoverRoute.page,
       path: '/effects-discover',
+    ),
+    
+    // 播客详情页面
+    AutoRoute(
+      page: PodcastRoute.page,
+      path: '/podcast',
     ),
   ];
 }

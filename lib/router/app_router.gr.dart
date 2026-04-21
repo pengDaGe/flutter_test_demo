@@ -187,6 +187,22 @@ class MyHomeRouteArgs {
 }
 
 /// generated route for
+/// [PodcastPage]
+class PodcastRoute extends PageRouteInfo<void> {
+  const PodcastRoute({List<PageRouteInfo>? children})
+    : super(PodcastRoute.name, initialChildren: children);
+
+  static const String name = 'PodcastRoute';
+
+  static PageInfo page = PageInfo(
+    name,
+    builder: (data) {
+      return const PodcastPage();
+    },
+  );
+}
+
+/// generated route for
 /// [SplashPage]
 class SplashRoute extends PageRouteInfo<void> {
   const SplashRoute({List<PageRouteInfo>? children})

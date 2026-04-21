@@ -106,8 +106,8 @@ class LoginPage extends StatelessWidget {
                   iconPath: 'assets/images/login/icon_login_apple.png',
                   text: AppStrings.continueWithApple.tr,
                   onPressed: () {
-                    // 苹果登录跳转到 Vibeo 主界面
-                    RouterHelper.replaceAll(const VibeoMainRoute());
+                    // 苹果登录跳转到 Podcast 页面
+                    RouterHelper.replaceAll(const PodcastRoute());
                   },
                 ),
                 SocialLoginButton(
