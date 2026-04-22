@@ -43,6 +43,22 @@ class CreateVideoRoute extends PageRouteInfo<void> {
 }
 
 /// generated route for
+/// [CyberOracleChooseRealityPage]
+class CyberOracleChooseRealityRoute extends PageRouteInfo<void> {
+  const CyberOracleChooseRealityRoute({List<PageRouteInfo>? children})
+    : super(CyberOracleChooseRealityRoute.name, initialChildren: children);
+
+  static const String name = 'CyberOracleChooseRealityRoute';
+
+  static PageInfo page = PageInfo(
+    name,
+    builder: (data) {
+      return const CyberOracleChooseRealityPage();
+    },
+  );
+}
+
+/// generated route for
 /// [DiscoverMainPage]
 class DiscoverMainRoute extends PageRouteInfo<void> {
   const DiscoverMainRoute({List<PageRouteInfo>? children})

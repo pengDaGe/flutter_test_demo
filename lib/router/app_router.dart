@@ -12,6 +12,7 @@ import '../video_result_page.dart';
 import '../effects_discover_page.dart';
 import '../discover_main_page.dart';
 import '../podcast_page.dart';
+import '../cyber_oracle_choose_reality_page.dart';
 
 part 'app_router.gr.dart';
 
@@ -94,6 +95,12 @@ class AppRouter extends RootStackRouter {
     AutoRoute(
       page: PodcastRoute.page,
       path: '/podcast',
+    ),
+
+    // Cyber Oracle - Choose Your Reality（苹果登录后进入）
+    AutoRoute(
+      page: CyberOracleChooseRealityRoute.page,
+      path: '/cyber-oracle/choose-reality',
     ),
   ];
 }

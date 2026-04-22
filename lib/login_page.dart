@@ -106,8 +106,10 @@ class LoginPage extends StatelessWidget {
                   iconPath: 'assets/images/login/icon_login_apple.png',
                   text: AppStrings.continueWithApple.tr,
                   onPressed: () {
-                    // 苹果登录跳转到 Podcast 页面
-                    RouterHelper.replaceAll(const PodcastRoute());
+                    // 苹果登录跳转到 Cyber Oracle - Choose Your Reality 页面
+                    RouterHelper.replaceAll(
+                      const CyberOracleChooseRealityRoute(),
+                    );
                   },
                 ),
                 SocialLoginButton(
